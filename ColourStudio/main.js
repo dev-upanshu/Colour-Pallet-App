@@ -1,11 +1,12 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 1440, height: 920, minWidth: 1050, minHeight: 700,
-    backgroundColor: '#0b0d12',
+    backgroundColor: '#f8f9fc',
+    icon: path.join(__dirname, 'assets', 'icon.ico'),
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false }
   });
   win.loadFile(path.join(__dirname, 'index.html'));
@@ -30,4 +31,10 @@ ipcMain.handle('read-image', async (_event, filePath) => {
   const ext = path.extname(filePath).slice(1).toLowerCase();
   const mime = ({jpg:'jpeg',jpeg:'jpeg',png:'png',webp:'webp',bmp:'bmp'})[ext] || 'png';
   return `data:image/${mime};base64,${fs.readFileSync(filePath).toString('base64')}`;
+});
+
+// Open the creator's support page in the user's default browser.
+ipcMain.handle('open-support-page', async () => {
+  await shell.openExternal('https://buymeacoffee.com/upanshu');
+  return true;
 });

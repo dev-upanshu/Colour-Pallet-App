@@ -28,4 +28,10 @@ The installer will be created in `dist/`.
 - Image extraction is processed locally in the app.
 - The palette generator is a built-in prompt/rule-based generator. It does not call a hosted AI model and needs no API key.
 - Export uses a native Save dialog.
-- The installer config expects an optional `assets/icon.ico`; remove the `icon` line from `package.json` if you do not add a custom icon.
+- The project includes a multi-resolution Windows icon at `assets/icon.ico` plus PNG sizes for other app surfaces. The same ICO is used for the app window, installer, uninstaller, and desktop shortcut.
+
+## Support the developer
+
+Use the **Buy Me a Coffee** button in the sidebar to support development: https://buymeacoffee.com/upanshu
+
+Developed by Upanshu Sharma.

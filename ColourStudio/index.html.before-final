@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Colour Studio</title><link rel="stylesheet" href="src/styles.css"></head>
+<body><div class="app-shell">
+<aside class="sidebar">
+  <div class="brand"><div class="brand-mark">◈</div><div><b>CHROMA</b><small>COLOUR STUDIO</small></div></div>
+  <div class="side-label">WORKSPACE</div>
+  <nav id="nav">
+    <button class="nav-item active" data-page="library"><span>▦</span> Palette library</button>
+    <button class="nav-item" data-page="gradient"><span>◩</span> Gradient studio</button>
+    <button class="nav-item" data-page="extractor"><span>▧</span> Image extractor</button>
+    <button class="nav-item" data-page="generator"><span>✳</span> AI palette generator</button>
+    <button class="nav-item" data-page="preview"><span>▣</span> Live preview</button>
+    <button class="nav-item" data-page="wheel"><span>◉</span> Colour wheel</button>
+    <button class="nav-item" data-page="shades"><span>▤</span> Shades generator</button>
+    <button class="nav-item" data-page="contrast"><span>◐</span> Contrast checker</button>
+  </nav>
+  <div class="side-bottom"><button class="nav-item" data-page="favorites"><span>♡</span> Favourites <span id="favCount" class="count">0</span></button>
+  <button id="themeToggle" class="theme-toggle">☼ <span>Switch appearance</span></button></div>
+</aside>
+<main class="main">
+  <header class="topbar"><div><div class="eyebrow">YOUR CREATIVE WORKSPACE</div><h1 id="pageTitle">Palette library</h1></div><div class="top-actions"><span class="local-pill"><i></i> Saved locally</span><button class="icon-btn" id="exportTop" title="Export current palette">⇩</button></div></header>
+  
+  <section class="ad-container ad-pending" aria-label="Advertisement">
+    <div class="ad-heading">ADVERTISEMENT</div>
+    <div class="ad-slot">
+      <script async src="https://serve.adviverse.com/sdk.js"
+        data-tag="tk_eff56c05bfcb0f26ae"></script>
+    </div>
+  </section>
+  <section id="content" class="content"></section>
+
+  <footer>COLOUR STUDIO <span>•</span> MADE FOR CREATIVE MINDS <span class="footer-right">Your palettes stay on this device</span></footer>
+</main></div><script src="src/app.js"></script></body></html>

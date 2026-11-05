@@ -1057,7 +1057,7 @@ seed.push(
 
 let palettes = seed.map((p,i)=>({id:'seed'+i,name:p[0],colors:p[1]}));
 let favorites = JSON.parse(localStorage.getItem('cs-favorites')||'[]');
-let current = [...seed[0][1]], currentName='Ocean Depths', page='library', theme=localStorage.getItem('cs-theme')||'dark', extracted=[];
+let current = [...seed[0][1]], currentName='Ocean Depths', page='library', theme=localStorage.getItem('cs-theme')||'light', extracted=[];
 document.documentElement.dataset.theme=theme;
 function saveFav(){localStorage.setItem('cs-favorites',JSON.stringify(favorites));$('#favCount').textContent=favorites.length;}
 function hexToRgb(h){h=h.replace('#','');return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16));}
@@ -1068,15 +1068,15 @@ function contrast(a,b){let x=luminance(a),y=luminance(b);return ((Math.max(x,y)+
 function copy(t){navigator.clipboard?.writeText(t);toast('Copied '+t);}
 function toast(t){let n=document.createElement('div');n.textContent=t;n.style='position:fixed;bottom:25px;right:28px;background:var(--accent2);color:white;padding:12px 18px;border-radius:9px;z-index:99;box-shadow:var(--shadow)';document.body.append(n);setTimeout(()=>n.remove(),1800);}
 function setPage(p){
-  document.querySelector('.ad-container')?.classList.toggle('is-hidden', p !== 'library');
   page=p;$$('.nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));$('#pageTitle').textContent=({'library':'Palette library','gradient':'Gradient studio','extractor':'Image colour extractor','generator':'AI palette generator','preview':'Live website preview','wheel':'Colour wheel','shades':'Shades generator','contrast':'Contrast checker','favorites':'Your favourites'})[p];render();}
 function card(p){return `<article class="palette-card"><div class="swatches">${p.colors.map(c=>`<div class="swatch" style="background:${c}" data-copy="${c}" title="Copy ${c}"></div>`).join('')}</div><div class="card-meta"><button class="palette-name" data-open="${p.id}">${p.name}</button><div class="mini-actions"><button class="btn" data-use="${p.id}">Use</button><button data-fav="${p.id}" title="Favourite">${favorites.some(x=>x.id===p.id)?'♥':'♡'}</button></div></div><div class="hex-row">${p.colors.map(c=>`<span class="hex-chip" data-copy="${c}" title="Copy ${c}">${c}</span>`).join('')}</div></article>`;}
 function setCurrent(name,colors){current=[...colors];currentName=name;}
 function paletteExport(format='css'){if(format==='tailwind')return `// tailwind.config.js\nmodule.exports = { theme: { extend: { colors: { '${currentName.toLowerCase().replace(/[^a-z0-9]+/g,'-')}': { ${current.map((c,i)=>`'${(i+1)*100}': '${c}'`).join(', ')} } } } } };`;return `:root {\n${current.map((c,i)=>`  --color-${i+1}: ${c};`).join('\n')}\n}`;}
 async function exportCurrent(){let format=prompt('Export format: css or tailwind','css');if(!format)return;format=format.toLowerCase();if(!['css','tailwind'].includes(format)){toast('Choose css or tailwind');return;}let result=await window.studio.saveText({suggestedName:`${currentName.replace(/\s+/g,'-').toLowerCase()}.${format==='css'?'css':'js'}`,content:paletteExport(format)});if(!result.canceled)toast('Exported successfully');}
 function render(){const c=$('#content');
-if(page==='library'||page==='favorites'){let list=page==='favorites'?favorites:palettes;c.innerHTML=`<div class="section-head"><div><h2>${page==='favorites'?'Saved collections':'Explore curated palettes'}</h2><div class="muted" style="margin-top:5px">${list.length} colour collections · Click a swatch to copy its HEX</div></div><div class="toolbar"><input id="search" class="search" placeholder="Search palettes..."><button class="btn" id="random">✳ Surprise me</button></div></div><div class="grid" id="cards">${list.map(card).join('')||'<div class="empty">No favourites yet. Save palettes with the ♡ button.</div>'}</div>`;
-$('#search').oninput=e=>{$('#cards').innerHTML=list.filter(p=>p.name.toLowerCase().includes(e.target.value.toLowerCase())||p.colors.some(x=>x.toLowerCase().includes(e.target.value.toLowerCase()))).map(card).join('')||'<div class="empty">No palettes found.</div>';wireCards();};$('#random').onclick=()=>{let p=palettes[Math.floor(Math.random()*palettes.length)];setCurrent(p.name,p.colors);toast('Try '+p.name);};wireCards();}
+if(page==='library'||page==='favorites'){let list=page==='favorites'?favorites:palettes, filtered=list, visible=48;c.innerHTML=`<div class="section-head"><div><h2>${page==='favorites'?'Saved collections':'Explore curated palettes'}</h2><div class="muted" style="margin-top:5px">${list.length} colour collections · Click a swatch to copy its HEX</div></div><div class="toolbar"><input id="search" class="search" placeholder="Search palettes..."><button class="btn" id="random">✳ Surprise me</button></div></div><div class="grid" id="cards"></div><div class="load-more-wrap" id="loadMoreWrap"></div>`;
+const draw=()=>{const cards=$('#cards');cards.innerHTML=filtered.slice(0,visible).map(card).join('')||'<div class="empty">'+(page==='favorites'?'No favourites yet. Save palettes with the ♡ button.':'No palettes found.')+'</div>';const more=$('#loadMoreWrap');more.innerHTML=filtered.length>visible?`<button class="btn-secondary" id="loadMore">Load more palettes (${filtered.length-visible} remaining)</button>`:'';$('#loadMore')?.addEventListener('click',()=>{visible+=48;draw();});wireCards();};
+let searchFrame=0;$('#search').oninput=e=>{const q=e.target.value.trim().toLowerCase();if(searchFrame)cancelAnimationFrame(searchFrame);searchFrame=requestAnimationFrame(()=>{filtered=q?list.filter(p=>p.name.toLowerCase().includes(q)||p.colors.some(x=>x.toLowerCase().includes(q))):list;visible=48;draw();searchFrame=0;});};$('#random').onclick=()=>{let p=palettes[Math.floor(Math.random()*palettes.length)];setCurrent(p.name,p.colors);toast('Try '+p.name);};draw();}
 if(page==='gradient'){c.innerHTML=`<div class="two-col"><div class="panel"><h3>Gradient controls</h3><label class="field">Gradient type<select id="gradType"><option value="linear">Linear</option><option value="radial">Radial</option></select></label><label class="field">Angle <input id="angle" type="range" min="0" max="360" value="135"></label><div class="stops" id="stops"></div><div class="toolbar" style="margin-top:15px"><button class="btn-secondary" id="addStop">＋ Add colour</button><button class="btn" id="copyGrad">Copy CSS</button></div></div><div class="panel"><h3>Live gradient</h3><div class="big-preview" id="gradientPreview"><h2>Colour in motion.</h2><span>Beautiful blends, made simple.</span></div><pre id="gradCode" class="muted" style="white-space:pre-wrap;font-size:11px"></pre></div></div>`;
 let stops=['#7C3AED','#EC4899','#F59E0B'];function update(){let type=$('#gradType').value,angle=$('#angle').value;let css=type==='linear'?`linear-gradient(${angle}deg, ${stops.join(', ')})`:`radial-gradient(circle, ${stops.join(', ')})` ;$('#gradientPreview').style.background=css;$('#gradCode').textContent=`background: ${css};`;$('#stops').innerHTML=stops.map((s,i)=>`<div class="stop"><input type="color" value="${s}" data-stop="${i}"><span>${s}</span>${stops.length>2?`<button data-remove="${i}" class="mini-actions">×</button>`:''}</div>`).join('');$$('[data-stop]').forEach(x=>x.oninput=e=>{stops[+e.target.dataset.stop]=e.target.value.toUpperCase();update();});$$('[data-remove]').forEach(x=>x.onclick=()=>{stops.splice(+x.dataset.remove,1);update();});}
 $('#gradType').onchange=update;$('#angle').oninput=update;$('#addStop').onclick=()=>{if(stops.length<6){stops.push('#22C55E');update();}};$('#copyGrad').onclick=()=>copy($('#gradCode').textContent);update();}
@@ -1125,45 +1125,20 @@ function openPaletteModal(p){
       <button class="btn palette-modal-use">Use this palette</button>
     </section>`;
   document.body.append(overlay);
-  overlay.querySelector('.palette-modal-close').onclick=()=>overlay.remove();
-  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  const closeModal=()=>{overlay.remove();document.removeEventListener('keydown',closeOnEscape);};
+  overlay.querySelector('.palette-modal-close').onclick=closeModal;
+  overlay.onclick=e=>{if(e.target===overlay)closeModal();};
   overlay.querySelectorAll('[data-modal-copy]').forEach(b=>b.onclick=()=>copy(b.dataset.modalCopy));
   overlay.querySelector('.palette-modal-use').onclick=()=>{
     setCurrent(p.name,p.colors);
-    overlay.remove();
+    closeModal();
     toast('Current palette: '+p.name);
   };
-  const closeOnEscape=e=>{if(e.key==='Escape'){overlay.remove();document.removeEventListener('keydown',closeOnEscape);}};
+  const closeOnEscape=e=>{if(e.key==='Escape')closeModal();};
   document.addEventListener('keydown',closeOnEscape);
 }
 $('#nav').addEventListener('click',e=>{let b=e.target.closest('[data-page]');if(b)setPage(b.dataset.page);});$$('.side-bottom [data-page]').forEach(b=>b.onclick=()=>setPage(b.dataset.page));
-$('#themeToggle').onclick=()=>{theme=theme==='dark'?'light':'dark';document.documentElement.dataset.theme=theme;localStorage.setItem('cs-theme',theme);};
+$('#themeToggle').onclick=()=>{theme=theme==='dark'?'light':'dark';document.documentElement.dataset.theme=theme;localStorage.setItem('cs-theme',theme);$('#themeToggle .theme-icon').textContent=theme==='dark'?'☼':'☾';};
+$('#themeToggle .theme-icon').textContent=theme==='dark'?'☼':'☾';
+$('#coffeeSupport').onclick=e=>{e.preventDefault();window.studio.openSupportPage();};
 $('#exportTop').onclick=exportCurrent;saveFav();render();
-
-// CHROMA_AD_VISIBILITY
-document.addEventListener('DOMContentLoaded', () => {
-  const container = document.querySelector('.ad-container');
-  const slot = container?.querySelector('.ad-slot');
-  if (!container || !slot) return;
-
-  const hasAd = () =>
-    !!slot.querySelector('iframe, img, video, [data-ad]');
-
-  const reveal = () => {
-    if (hasAd()) {
-      container.classList.remove('ad-pending');
-      container.classList.add('ad-loaded');
-    }
-  };
-
-  const observer = new MutationObserver(reveal);
-  observer.observe(slot, { childList: true, subtree: true });
-
-  reveal();
-
-  setTimeout(() => {
-    if (!hasAd()) {
-      container.classList.add('ad-pending');
-    }
-  }, 8000);
-});
