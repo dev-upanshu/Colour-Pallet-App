@@ -103,3 +103,117 @@
     transition-duration: .01ms !important;
   }
 }
+
+/* Hide unfilled advertising inventory */
+.ad-container.ad-pending {
+  display: none !important;
+}
+.ad-container.ad-loaded {
+  display: block;
+}
+
+
+/* CHROMA FINAL LAYOUT AND PALETTE DETAILS */
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+.app-shell {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+.sidebar {
+  height: 100vh;
+  min-height: 0;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.main {
+  height: 100vh;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.palette-name {
+  border: 0;
+  padding: 5px 0;
+  background: transparent;
+  color: var(--text);
+  font: 600 13px 'DM Sans';
+  text-align: left;
+  cursor: pointer;
+}
+.palette-name:hover { color: var(--accent); }
+.palette-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0,0,0,.72);
+  backdrop-filter: blur(8px);
+  animation: chromaFadeUp .2s ease both;
+}
+.palette-modal {
+  position: relative;
+  width: min(650px, 100%);
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: 0 25px 90px #0008;
+}
+.palette-modal h2 {
+  margin: 9px 0 22px;
+  font: 700 25px 'Space Grotesk';
+}
+.palette-modal-close {
+  position: absolute;
+  top: 15px;
+  right: 17px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel2);
+  color: var(--text);
+  font-size: 23px;
+  cursor: pointer;
+}
+.palette-modal-swatches {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+.palette-detail-swatch {
+  min-width: 0;
+  height: 155px;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  padding: 8px 3px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.palette-detail-swatch span {
+  padding: 5px 6px;
+  border-radius: 6px;
+  background: rgba(0,0,0,.48);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+}
+.palette-modal-use {
+  width: 100%;
+  margin-top: 17px;
+  padding: 14px;
+}
+@media(max-width:600px) {
+  .palette-modal { padding: 22px 16px; }
+  .palette-modal-swatches { gap: 5px; }
+  .palette-detail-swatch { height: 110px; }
+  .palette-detail-swatch span { font-size: 8px; }
+}

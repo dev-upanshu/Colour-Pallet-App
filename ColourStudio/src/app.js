@@ -1070,7 +1070,7 @@ function toast(t){let n=document.createElement('div');n.textContent=t;n.style='p
 function setPage(p){
   document.querySelector('.ad-container')?.classList.toggle('is-hidden', p !== 'library');
   page=p;$$('.nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));$('#pageTitle').textContent=({'library':'Palette library','gradient':'Gradient studio','extractor':'Image colour extractor','generator':'AI palette generator','preview':'Live website preview','wheel':'Colour wheel','shades':'Shades generator','contrast':'Contrast checker','favorites':'Your favourites'})[p];render();}
-function card(p){return `<article class="palette-card"><div class="swatches">${p.colors.map(c=>`<div class="swatch" style="background:${c}" data-copy="${c}" title="${c}"></div>`).join('')}</div><div class="card-meta"><b>${p.name}</b><div class="mini-actions"><button data-use="${p.id}">Use</button><button data-fav="${p.id}">${favorites.some(x=>x.id===p.id)?'♥':'♡'}</button></div></div><div class="hex-row">${p.colors.map(c=>`<span class="hex-chip">${c}</span>`).join('')}</div></article>`;}
+function card(p){return `<article class="palette-card"><div class="swatches">${p.colors.map(c=>`<div class="swatch" style="background:${c}" data-copy="${c}" title="Copy ${c}"></div>`).join('')}</div><div class="card-meta"><button class="palette-name" data-open="${p.id}">${p.name}</button><div class="mini-actions"><button class="btn" data-use="${p.id}">Use</button><button data-fav="${p.id}" title="Favourite">${favorites.some(x=>x.id===p.id)?'♥':'♡'}</button></div></div><div class="hex-row">${p.colors.map(c=>`<span class="hex-chip" data-copy="${c}" title="Copy ${c}">${c}</span>`).join('')}</div></article>`;}
 function setCurrent(name,colors){current=[...colors];currentName=name;}
 function paletteExport(format='css'){if(format==='tailwind')return `// tailwind.config.js\nmodule.exports = { theme: { extend: { colors: { '${currentName.toLowerCase().replace(/[^a-z0-9]+/g,'-')}': { ${current.map((c,i)=>`'${(i+1)*100}': '${c}'`).join(', ')} } } } } };`;return `:root {\n${current.map((c,i)=>`  --color-${i+1}: ${c};`).join('\n')}\n}`;}
 async function exportCurrent(){let format=prompt('Export format: css or tailwind','css');if(!format)return;format=format.toLowerCase();if(!['css','tailwind'].includes(format)){toast('Choose css or tailwind');return;}let result=await window.studio.saveText({suggestedName:`${currentName.replace(/\s+/g,'-').toLowerCase()}.${format==='css'?'css':'js'}`,content:paletteExport(format)});if(!result.canceled)toast('Exported successfully');}
@@ -1090,7 +1090,80 @@ if(page==='contrast'){c.innerHTML=`<div class="two-col"><div class="panel"><h3>C
 }
 function wireCopy(){$$('[data-copy]').forEach(x=>x.onclick=()=>copy(x.dataset.copy));}
 function addFavorite(name,colors){let id='fav-'+Date.now();favorites.unshift({id,name,colors:[...colors]});saveFav();toast('Added to favourites');}
-function wireCards(){wireCopy();$$('[data-use]').forEach(b=>b.onclick=()=>{let p=palettes.find(x=>x.id===b.dataset.use)||favorites.find(x=>x.id===b.dataset.use);if(p){setCurrent(p.name,p.colors);toast('Current palette: '+p.name);}});$$('[data-fav]').forEach(b=>b.onclick=()=>{let p=palettes.find(x=>x.id===b.dataset.fav)||favorites.find(x=>x.id===b.dataset.fav);if(!p)return;if(favorites.some(x=>x.id===p.id)){favorites=favorites.filter(x=>x.id!==p.id);}else{favorites.unshift({...p,id:'fav-'+Date.now()});}saveFav();render();});}
+function wireCards(){
+  wireCopy();
+  $$('[data-open]').forEach(b=>b.onclick=()=>{
+    const p=palettes.find(x=>x.id===b.dataset.open)||favorites.find(x=>x.id===b.dataset.open);
+    if(p) openPaletteModal(p);
+  });
+  $$('[data-use]').forEach(b=>b.onclick=()=>{
+    const p=palettes.find(x=>x.id===b.dataset.use)||favorites.find(x=>x.id===b.dataset.use);
+    if(p){setCurrent(p.name,p.colors);toast('Current palette: '+p.name);}
+  });
+  $$('[data-fav]').forEach(b=>b.onclick=()=>{
+    const p=palettes.find(x=>x.id===b.dataset.fav)||favorites.find(x=>x.id===b.dataset.fav);
+    if(!p)return;
+    if(favorites.some(x=>x.id===p.id)){favorites=favorites.filter(x=>x.id!==p.id);}
+    else{favorites.unshift({...p,id:'fav-'+Date.now()});}
+    saveFav();render();
+  });
+}
+
+function openPaletteModal(p){
+  document.querySelector('.palette-modal-backdrop')?.remove();
+  const overlay=document.createElement('div');
+  overlay.className='palette-modal-backdrop';
+  overlay.innerHTML=`
+    <section class="palette-modal" role="dialog" aria-modal="true" aria-label="Palette details">
+      <button class="palette-modal-close" aria-label="Close">×</button>
+      <div class="eyebrow">PALETTE DETAILS</div>
+      <h2>${p.name}</h2>
+      <div class="palette-modal-swatches">
+        ${p.colors.map(c=>`<button class="palette-detail-swatch" style="background:${c}" data-modal-copy="${c}" title="Copy ${c}"><span>${c}</span></button>`).join('')}
+      </div>
+      <p class="muted">Select any colour to copy its HEX code.</p>
+      <button class="btn palette-modal-use">Use this palette</button>
+    </section>`;
+  document.body.append(overlay);
+  overlay.querySelector('.palette-modal-close').onclick=()=>overlay.remove();
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  overlay.querySelectorAll('[data-modal-copy]').forEach(b=>b.onclick=()=>copy(b.dataset.modalCopy));
+  overlay.querySelector('.palette-modal-use').onclick=()=>{
+    setCurrent(p.name,p.colors);
+    overlay.remove();
+    toast('Current palette: '+p.name);
+  };
+  const closeOnEscape=e=>{if(e.key==='Escape'){overlay.remove();document.removeEventListener('keydown',closeOnEscape);}};
+  document.addEventListener('keydown',closeOnEscape);
+}
 $('#nav').addEventListener('click',e=>{let b=e.target.closest('[data-page]');if(b)setPage(b.dataset.page);});$$('.side-bottom [data-page]').forEach(b=>b.onclick=()=>setPage(b.dataset.page));
 $('#themeToggle').onclick=()=>{theme=theme==='dark'?'light':'dark';document.documentElement.dataset.theme=theme;localStorage.setItem('cs-theme',theme);};
 $('#exportTop').onclick=exportCurrent;saveFav();render();
+
+// CHROMA_AD_VISIBILITY
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.querySelector('.ad-container');
+  const slot = container?.querySelector('.ad-slot');
+  if (!container || !slot) return;
+
+  const hasAd = () =>
+    !!slot.querySelector('iframe, img, video, [data-ad]');
+
+  const reveal = () => {
+    if (hasAd()) {
+      container.classList.remove('ad-pending');
+      container.classList.add('ad-loaded');
+    }
+  };
+
+  const observer = new MutationObserver(reveal);
+  observer.observe(slot, { childList: true, subtree: true });
+
+  reveal();
+
+  setTimeout(() => {
+    if (!hasAd()) {
+      container.classList.add('ad-pending');
+    }
+  }, 8000);
+});
